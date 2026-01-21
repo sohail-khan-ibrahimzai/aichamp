@@ -21,7 +21,6 @@ const Dashboard = ({
   const [models, setModels] = useState([]);
   const [messages, setMessages] = useState({});
   const [loadingModels, setLoadingModels] = useState({});
-  const [loading, setLoading] = useState(false);
 
   const sessionId = sessionData?.id || null;
   const bottomRefs = useRef({});
@@ -68,17 +67,12 @@ const Dashboard = ({
 
         setModels(mappedModels);
         setMessages(msgMap);
-        setLoading(false);
         return;
       }
 
       if (!sessionData) {
-        setLoading(true);
         const res = await chatService.getModels();
-        if (!res.ok) {
-          setLoading(false);
-          return;
-        }
+        if (!res.ok) return;
 
         const mappedModels = res.data.data.map((m) => ({
           id: m.id,
@@ -94,7 +88,6 @@ const Dashboard = ({
 
         setModels(mappedModels);
         setMessages(msgMap);
-        setLoading(false);
       }
     };
 
@@ -232,16 +225,6 @@ const Dashboard = ({
       setError("Error sending prompt");
     }
   };
-
-  if (loading) return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-      <div className="dot-loader">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-    </div>
-  );
 
   return (
     <main className="dashboard">

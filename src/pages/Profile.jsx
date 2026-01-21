@@ -70,15 +70,7 @@ useEffect(() => {
     setSuccess("Profile updated successfully.");
   };
 
-  if (fetching) return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-      <div className="dot-loader">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-    </div>
-  );
+  if (fetching) return <p style={{ padding: "20px" }}>Loading profile...</p>;
 
   return (
     <div className="page active">
