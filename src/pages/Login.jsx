@@ -1,7 +1,9 @@
 
 import { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { toast } from "react-toastify"; 
+import { toast } from "react-toastify";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import "../styles/auth.css";
 import { authService } from "../services/authService";
 import { AuthContext } from "../guards/context/AuthContext";
@@ -15,6 +17,7 @@ const Login = () => {
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -60,14 +63,23 @@ const Login = () => {
 
             <div className="form-group">
               <label className="form-label">Password</label>
-              <input
-                type="password"
-                className="form-control"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="password-input-group">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="form-control"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                </button>
+              </div>
             </div>
 
             <div className="form-check">

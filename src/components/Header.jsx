@@ -46,11 +46,11 @@ const Header = () => {
                 <FontAwesomeIcon icon={faUserCircle} /> My Profile
               </li>
               {/* <li><a href="#"><FontAwesomeIcon icon={faUserCircle} /> My Profile</a></li> */}
-              <li><a href="#"><FontAwesomeIcon icon={faBrain} /> AI Comparator</a></li>
-              <li><a href="#"><FontAwesomeIcon icon={faCog} /> Settings</a></li>
-              <li><a href="#"><FontAwesomeIcon icon={faBookmark} /> Saved Comparisons</a></li>
-              <li><a href="#"><FontAwesomeIcon icon={faHistory} /> History</a></li>
-              <li><a href="#"><FontAwesomeIcon icon={faQuestionCircle} /> Help & Support</a></li>
+              {/* <li><a href="#"><FontAwesomeIcon icon={faBrain} /> AI Comparator</a></li> */}
+              {/* <li><a href="#"><FontAwesomeIcon icon={faCog} /> Settings</a></li> */}
+              {/* <li><a href="#"><FontAwesomeIcon icon={faBookmark} /> Saved Comparisons</a></li> */}
+              {/* <li><a href="#"><FontAwesomeIcon icon={faHistory} /> History</a></li> */}
+              {/* <li><a href="#"><FontAwesomeIcon icon={faQuestionCircle} /> Help & Support</a></li> */}
               <li onClick={() => navigate("/change-password")}>
                 <FontAwesomeIcon icon={faKey} /> Change Password
               </li>

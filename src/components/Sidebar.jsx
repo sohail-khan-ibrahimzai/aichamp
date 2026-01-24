@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faEllipsisV } from "@fortawesome/free-solid-svg-icons";
 import "../styles/Sidebar.css";
@@ -14,10 +14,23 @@ const Sidebar = ({ sessions, setSessions, onSessionChange }) => {
 
   const [editingSessionId, setEditingSessionId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
+  const [originalTitle, setOriginalTitle] = useState("");
 
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (openMenu && !e.target.closest('.session-menu')) {
+        setOpenMenu(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openMenu]);
 
   const handleNew = () => {
     localStorage.removeItem("currentSessionId");
@@ -31,23 +44,28 @@ const Sidebar = ({ sessions, setSessions, onSessionChange }) => {
     if (editingSessionId) return;
 
     setOpenMenu(null);
+
+    setCurrentSessionId(session.id);
+    localStorage.setItem("currentSessionId", session.id);
+
+    onSessionChange(session, [], []);
+    navigate("/dashboard");
+
+    // Load full data asynchronously
     try {
       const res = await sessionService.getSessionById(session.id);
+      if (!res.ok) return;
+
       const modelRes = await sessionService.getSessionModels(session.id);
       const msgRes = await sessionService.getSessionMessages(session.id);
 
-      if (!res.ok || !modelRes.ok) return;
-
-      setCurrentSessionId(session.id);
-      localStorage.setItem("currentSessionId", session.id);
-
-      onSessionChange(
-        res.data.data.session,
-        msgRes?.data?.data?.messages || [],
-        modelRes.data.data.models
-      );
-
-      navigate("/dashboard");
+      if (modelRes.ok && msgRes.ok) {
+        onSessionChange(
+          res.data.data.session,
+          msgRes.data.data.messages || [],
+          modelRes.data.data.models
+        );
+      }
     } catch (err) {
       console.error(err);
     }
@@ -56,22 +74,24 @@ const Sidebar = ({ sessions, setSessions, onSessionChange }) => {
   const startEditing = (session) => {
     setEditingSessionId(session.id);
     setEditTitle(session.title);
+    setOriginalTitle(session.title);
     setOpenMenu(null);
   };
 
   const saveEdit = async (session) => {
-    if (!editTitle.trim()) {
+    const trimmedTitle = editTitle.trim();
+    if (!trimmedTitle || trimmedTitle === originalTitle) {
       cancelEdit();
       return;
     }
 
     try {
       await sessionService.activateSession(session.id);
-      await sessionService.renameActiveSession(editTitle.trim());
+      await sessionService.renameActiveSession(trimmedTitle);
 
       setSessions((prev) =>
         prev.map((s) =>
-          s.id === session.id ? { ...s, title: editTitle.trim() } : s
+          s.id === session.id ? { ...s, title: trimmedTitle } : s
         )
       );
     } catch (err) {
@@ -89,6 +109,7 @@ const Sidebar = ({ sessions, setSessions, onSessionChange }) => {
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
 
+    setDeleting(true);
     try {
       await sessionService.deleteSession(deleteTarget.id);
 
@@ -104,6 +125,7 @@ const Sidebar = ({ sessions, setSessions, onSessionChange }) => {
     } catch (err) {
       console.error(err);
     } finally {
+      setDeleting(false);
       setDeleteTarget(null);
       setOpenMenu(null);
     }
@@ -201,6 +223,7 @@ const Sidebar = ({ sessions, setSessions, onSessionChange }) => {
         confirmText="Delete"
         cancelText="Cancel"
         danger
+        loading={deleting}
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteTarget(null)}
       />
