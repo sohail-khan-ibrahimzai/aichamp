@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { authService } from "../services/authService";
 import "../styles/auth.css";
 
@@ -12,7 +13,6 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
 useEffect(() => {
   const fetchProfile = async () => {
@@ -49,7 +49,6 @@ useEffect(() => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setSuccess("");
     setLoading(true);
 
     const payload = {
@@ -67,7 +66,7 @@ useEffect(() => {
       return;
     }
 
-    setSuccess("Profile updated successfully.");
+    toast.success("Profile updated successfully.");
   };
 
   if (fetching) return (
@@ -147,7 +146,6 @@ useEffect(() => {
             </div>
 
             {error && <p className="auth-error">{error}</p>}
-            {success && <p className="auth-success">{success}</p>}
 
             <button type="submit" className="auth-btn" disabled={loading}>
               {loading ? "Updating..." : "Update Profile"}

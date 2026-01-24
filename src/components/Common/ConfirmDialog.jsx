@@ -10,6 +10,7 @@ const ConfirmDialog = ({
   onConfirm,
   onCancel,
   danger = false,
+  loading = false,
 }) => {
   if (!open) return null;
 
@@ -26,8 +27,9 @@ const ConfirmDialog = ({
           <button
             className={`btn-confirm ${danger ? "danger" : ""}`}
             onClick={onConfirm}
+            disabled={loading}
           >
-            {confirmText}
+            {loading ? "Deleting..." : confirmText}
           </button>
         </div>
       </div>

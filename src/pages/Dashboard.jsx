@@ -22,6 +22,7 @@ const Dashboard = ({
   const [messages, setMessages] = useState({});
   const [loadingModels, setLoadingModels] = useState({});
   const [loading, setLoading] = useState(false);
+  const [loadingSession, setLoadingSession] = useState(false);
 
   const sessionId = sessionData?.id || null;
   const bottomRefs = useRef({});
@@ -30,46 +31,54 @@ const Dashboard = ({
 
   useEffect(() => {
     const load = async () => {
-      if (sessionData && sessionModels?.length > 0) {
-        const mappedModels = sessionModels.map((m) => ({
-          id: m.model_id,
-          name: m.model_name_full,
-          visible: Number(m.is_visible),
-        }));
+      if (sessionData) {
+        if (sessionModels?.length > 0) {
+          if (sessionMessages?.length > 0) {
+            const mappedModels = sessionModels.map((m) => ({
+              id: m.model_id,
+              name: m.model_name_full,
+              visible: Number(m.is_visible),
+            }));
 
-        const msgMap = {};
-        mappedModels.forEach((m) => {
-          msgMap[m.id] = [];
-          bottomRefs.current[m.id] = bottomRefs.current[m.id] || React.createRef();
-        });
+            const msgMap = {};
+            mappedModels.forEach((m) => {
+              msgMap[m.id] = [];
+              bottomRefs.current[m.id] = bottomRefs.current[m.id] || React.createRef();
+            });
 
-        // Group messages by prompt_id for responses
-        const promptMap = {};
-        sessionMessages?.forEach((msg) => {
-           if (msg.type === "prompt") {
-             promptMap[msg.id] = msg;
-           }
-         });
-
-        sessionMessages?.forEach((msg) => {
-           if (msg.type === "response" && msgMap[msg.model_id]) {
-             // Add the corresponding prompt first, if not already added
-             const prompt = promptMap[msg.prompt_id];
-             if (prompt && !msgMap[msg.model_id].some(m => m.type === "prompt" && m.content === prompt.content)) {
-               msgMap[msg.model_id].push({ type: "prompt", content: prompt.content });
-             }
-             // Then add the response
-             msgMap[msg.model_id].push({
-               type: "response",
-               content: msg.content,
+            const promptMap = {};
+            sessionMessages?.forEach((msg) => {
+               if (msg.type === "prompt") {
+                 promptMap[msg.id] = msg;
+               }
              });
-           }
-         });
 
-        setModels(mappedModels);
-        setMessages(msgMap);
-        setLoading(false);
-        return;
+            sessionMessages?.forEach((msg) => {
+               if (msg.type === "response" && msgMap[msg.model_id]) {
+                 const prompt = promptMap[msg.prompt_id];
+                 if (prompt && !msgMap[msg.model_id].some(item => item.type === "prompt" && item.content === prompt.content)) {
+                   msgMap[msg.model_id].push({ type: "prompt", content: prompt.content });
+                 }
+                 msgMap[msg.model_id].push({
+                   type: "response",
+                   content: msg.content,
+                 });
+               }
+             });
+
+            setModels(mappedModels);
+            setMessages(msgMap);
+          }
+          setLoading(false);
+          setLoadingSession(false);
+          return;
+        } else {
+          setModels([]);
+          setMessages({});
+          setLoadingSession(true);
+          setLoading(false);
+          return;
+        }
       }
 
       if (!sessionData) {
@@ -164,6 +173,18 @@ const Dashboard = ({
     if (!prompt.trim() || isSending) return;
     setError("");
 
+    const loaders = {};
+    models.forEach((m) => {
+      if (m.visible === 1) loaders[m.id] = true;
+    });
+    setLoadingModels(loaders);
+
+    const newMessages = { ...messages };
+    Object.keys(newMessages).forEach((id) => {
+      newMessages[id].push({ type: "prompt", content: prompt });
+    });
+    setMessages({ ...newMessages });
+
     try {
       let activeSessionId = sessionData?.id || null;
 
@@ -188,23 +209,53 @@ const Dashboard = ({
           }
         }
 
-        onSessionChange(newSession, [], []);
-        onSessionCreated(newSession);
+        const modelRes = await sessionService.getSessionModels(activeSessionId);
+        if (modelRes.ok) {
+          onSessionChange(newSession, [], modelRes.data.data.models);
+          onSessionCreated(newSession);
+
+          const mappedModels = modelRes.data.data.models.map((m) => ({
+            id: m.model_id,
+            name: m.model_name_full,
+            visible: Number(m.is_visible),
+          }));
+
+          setModels(mappedModels);
+
+          const loaders = {};
+          mappedModels.forEach((m) => {
+            if (m.visible === 1) loaders[m.id] = true;
+          });
+          setLoadingModels(loaders);
+
+          await sessionService.activateSession(activeSessionId);
+
+          for (const model of mappedModels) {
+            if (model.visible !== 1) continue;
+
+            const res = await chatService.sendPromptToModel(
+              activeSessionId,
+              model.id,
+              prompt
+            );
+
+            if (res.ok) {
+              newMessages[model.id].push({
+                type: "response",
+                content: res.data?.data?.response?.content || "",
+              });
+            }
+
+            setLoadingModels((prev) => ({ ...prev, [model.id]: false }));
+            setMessages({ ...newMessages });
+          }
+
+          setPrompt("");
+          return;
+        }
       }
 
       await sessionService.activateSession(activeSessionId);
-
-      const loaders = {};
-      models.forEach((m) => {
-        if (m.visible === 1) loaders[m.id] = true;
-      });
-      setLoadingModels(loaders);
-
-      const newMessages = { ...messages };
-      Object.keys(newMessages).forEach((id) => {
-        newMessages[id].push({ type: "prompt", content: prompt });
-      });
-      setMessages({ ...newMessages });
 
       for (const model of models) {
         if (model.visible !== 1) continue;
@@ -230,10 +281,11 @@ const Dashboard = ({
     } catch (err) {
       console.error(err);
       setError("Error sending prompt");
+      setLoadingModels({});
     }
   };
 
-  if (loading) return (
+  if (loading || loadingSession) return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
       <div className="dot-loader">
         <span></span>

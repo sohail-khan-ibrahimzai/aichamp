@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import "../styles/auth.css";
 
 import { signupModel } from "../models/signupModel";
@@ -11,13 +13,26 @@ const Signup = () => {
   const [form, setForm] = useState(signupModel);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleChange = (e) => {
     const { name, type, value, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    const newValue = type === "checkbox" ? checked : value;
+
+    setForm((prev) => {
+      const updated = { ...prev, [name]: newValue };
+      if ((name === "password" || name === "confirm") && updated.password && updated.confirm) {
+        if (updated.password === updated.confirm) {
+          setError("");
+        }
+      }
+      return updated;
+    });
+
+    if (name === "terms" && checked) {
+      setError("");
+    }
   };
 
   const handleSignup = async (e) => {
@@ -130,26 +145,45 @@ const Signup = () => {
 
             <div className="form-group">
               <label className="form-label">Password</label>
-              <input
-                name="password"
-                type="password"
-                className="form-control"
-                value={form.password}
-                onChange={handleChange}
-                required
-              />
+              <div className="password-input-group">
+                <input
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  className="form-control"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                </button>
+              </div>
             </div>
 
             <div className="form-group">
               <label className="form-label">Confirm Password</label>
-              <input
-                name="confirm"
-                type="password"
-                className="form-control"
-                value={form.confirm}
-                onChange={handleChange}
-                required
-              />
+              <div className="password-input-group">
+                <input
+                  name="confirm"
+                  type={showConfirm ? "text" : "password"}
+                  className="form-control"
+                  value={form.confirm}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                >
+                  <FontAwesomeIcon icon={showConfirm ? faEyeSlash : faEye} />
+                </button>
+              </div>
+              {error === "Passwords do not match" && <p className="auth-error">{error}</p>}
             </div>
 
             <div className="form-check">
@@ -165,7 +199,7 @@ const Signup = () => {
               </label>
             </div>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && error !== "Passwords do not match" && <p className="auth-error">{error}</p>}
 
             <button type="submit" className="auth-btn" disabled={loading}>
               {loading ? "Signing up..." : "Create Account"}
