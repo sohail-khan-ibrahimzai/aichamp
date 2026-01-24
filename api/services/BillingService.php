@@ -1157,7 +1157,8 @@ class BillingService {
 
             return [
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'gateway_transaction_id' => null
             ];
         }
     }

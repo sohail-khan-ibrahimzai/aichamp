@@ -15,7 +15,8 @@ class AuthController extends BaseController {
         $data = $this->getJsonInput();
 
         try {
-            $result = $this->authService->register($data);
+            // Pass the controller's validator instance to the service
+            $result = $this->authService->register($data, $this->validator);
 
             return $this->success([
                 "token" => $result['token'],

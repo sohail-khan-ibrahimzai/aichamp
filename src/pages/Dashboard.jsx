@@ -82,12 +82,8 @@ const Dashboard = ({
       }
 
       if (!sessionData) {
-        setLoading(true);
         const res = await chatService.getModels();
-        if (!res.ok) {
-          setLoading(false);
-          return;
-        }
+        if (!res.ok) return;
 
         const mappedModels = res.data.data.map((m) => ({
           id: m.id,
@@ -103,7 +99,6 @@ const Dashboard = ({
 
         setModels(mappedModels);
         setMessages(msgMap);
-        setLoading(false);
       }
     };
 

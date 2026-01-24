@@ -20,7 +20,10 @@ class AuthService {
         Logger::debug("JWT service validated successfully");
     }
 
-    public function register(array $data) {
+    public function register(array $data, $validator = null) {
+        // Use provided validator or create new instance
+        $validatorInstance = $validator ?? new Validator();
+        
         // Define validation rules
         $rules = [
             'email' => 'required|email',
@@ -49,13 +52,22 @@ class AuthService {
             'avatar_url.url' => 'Avatar URL must be a valid URL.'
         ];
 
-        $this->validator->setData($data)->rules($rules)->messages($messages);
+        $validatorInstance->setData($data)->rules($rules)->messages($messages);
 
-        if (!$this->validator->validate()) {
+        if (!$validatorInstance->validate()) {
+            // Store errors in the validator instance for retrieval
+            if ($validator !== null) {
+                // Copy errors to the provided validator instance
+                foreach ($validatorInstance->getErrors() as $field => $errors) {
+                    foreach ($errors as $error) {
+                        $validator->addCustomError($field, $error);
+                    }
+                }
+            }
             throw new InvalidArgumentException("Validation failed");
         }
 
-        $validatedData = $this->validator->getValidated();
+        $validatedData = $validatorInstance->getValidated();
 
         Logger::info("Attempting user registration", ['email' => $validatedData['email']]);
 
