@@ -51,7 +51,6 @@ const Sidebar = ({ sessions, setSessions, onSessionChange }) => {
     onSessionChange(session, [], []);
     navigate("/dashboard");
 
-    // Load full data asynchronously
     try {
       const res = await sessionService.getSessionById(session.id);
       if (!res.ok) return;
