@@ -173,13 +173,8 @@ class Router {
         $publicRoutes = [
             'Auth@signup',
             'Auth@login',
-            'Auth@verify',
-            'Auth@refresh',
-            'Auth@logout',
             'Auth@forgotPassword',
             'Auth@resetPassword',
-            'Auth@changePassword',
-            'Auth@requestEmailVerification',
             'Auth@verifyEmail',
             'AI@getModels', // OpenAI compatible models endpoint
             'Billing@handleWebhook' // Webhooks

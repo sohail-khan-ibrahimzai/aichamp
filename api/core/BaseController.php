@@ -23,7 +23,7 @@ class BaseController {
         $data = $this->request->getBody();
         $hasErrors = false;
 
-        if (empty($data)) {
+        if ($data === null || empty($data)) {
             $this->validator->addCustomError('body', 'Empty request body');
             $hasErrors = true;
         }

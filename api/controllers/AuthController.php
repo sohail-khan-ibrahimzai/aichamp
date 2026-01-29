@@ -225,6 +225,14 @@ class AuthController extends BaseController {
         $user = $this->getAuthenticatedUser();
         $data = $this->getJsonInput();
 
+        // Ensure data is an array
+        if (!is_array($data)) {
+            throw new InvalidArgumentException("Invalid request data");
+        }
+
+        // Validate required fields
+        $this->validateRequiredFields($data, ['current_password', 'new_password']);
+
         return $this->handleServiceCall(function() use ($user, $data) {
             $this->passwordService->changePassword(
                 $user['user_id'],

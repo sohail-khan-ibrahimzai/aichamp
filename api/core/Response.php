@@ -25,6 +25,12 @@ class Response {
         $allowedOrigins = Environment::getAllowedOrigins();
 
         $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        
+        // Handle empty origin - use first allowed origin as fallback
+        if (empty($origin) && !empty($allowedOrigins)) {
+            $origin = $allowedOrigins[0];
+        }
+        
         if (in_array($origin, $allowedOrigins)) {
             $this->headers['Access-Control-Allow-Origin'] = $origin;
         } else {
